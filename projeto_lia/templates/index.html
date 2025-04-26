@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>API de Perguntas Inteligentes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">🤖 API de Perguntas Inteligentes</h1>
+
+    <!-- Upload de contexto -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Upload de Contexto</h5>
+        <form action="/upload_context" method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <input type="file" name="file" class="form-control" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Enviar Contexto</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Fazer Pergunta -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Fazer Pergunta</h5>
+        <form id="ask-form">
+          <div class="mb-3">
+            <textarea
+              id="pergunta"
+              class="form-control"
+              placeholder="Digite sua pergunta"
+              rows="4"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn-success">Perguntar</button>
+        </form>
+        <div class="mt-3">
+          <strong>Resposta:</strong>
+          <p id="resposta" class="mt-2 text-primary"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Respostas anteriores -->
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Respostas anteriores</h5>
+        <button onclick="carregarRespostas()" class="btn btn-secondary mb-3">Ver respostas</button>
+        <ul id="lista-respostas" class="list-group"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("ask-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const pergunta = document.getElementById("pergunta").value;
+
+      const response = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pergunta, contexto_id: localStorage.getItem("contexto_id") })
+      });
+
+      const data = await response.json();
+      document.getElementById("resposta").innerText = data.resposta || "Erro ao obter resposta";
+    });
+
+    async function carregarRespostas() {
+      const response = await fetch("/answers");
+      const data = await response.json();
+      const lista = document.getElementById("lista-respostas");
+      lista.innerHTML = "";
+      data.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.innerHTML = `<strong>Q:</strong> ${item.pergunta}<br><strong>A:</strong> ${item.resposta}`;
+        lista.appendChild(li);
+      });
+    }
+
+    // Armazena o contexto_id após upload (via JS opcional se integrar com resposta do backend)
+    async function interceptarUpload() {
+      const form = document.querySelector('form[action="/upload_context"]');
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const response = await fetch("/upload_context", {
+          method: "POST",
+          body: formData
+        });
+        const data = await response.json();
+        if (data.contexto_id) {
+          localStorage.setItem("contexto_id", data.contexto_id);
+          alert("Contexto enviado com sucesso!");
+          form.reset();
+        } else {
+          alert("Erro ao enviar o contexto.");
+        }
+      });
+    }
+
+    interceptarUpload();
+  </script>
+</body>
+</html>

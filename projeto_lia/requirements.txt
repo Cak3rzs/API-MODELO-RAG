@@ -1,0 +1,10 @@
+Flask
+python-dotenv
+pymongo[srv]==3.12
+langchain
+langchain_community
+langchain_groq
+langchain_mongodb
+pypdf
+python-docx
+pandas
